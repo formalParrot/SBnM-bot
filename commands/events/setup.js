@@ -180,24 +180,24 @@ module.exports = {
 
     await interaction.editReply(
       `Event **${name}** created. Submission channel: <#${subChannel.id}>.\nTemplate for the task description:\`\`\`
-        ## <Task Name>
+## <Task Name>
 
-        <Task Description>
+<Task Description>
 
-        :date: Competition Ends: 24th of May (in 9 days)
+:date: Competition Ends: 24th of May (in 9 days)
 
 
-        :envelope: Submit your builds via the button above ^^
+:envelope: Submit your builds via the button above ^^
 
-        :green_book: Rules:
+:green_book: Rules:
 
-        :x: No stolen builds
-        :x: No inappropriate builds
+:x: No stolen builds
+:x: No inappropriate builds
 
-        :thinking: Any questions?
-        <Question channel has to be set up, and link pasted here>
+:thinking: Any questions?
+<Question channel has to be set up, and link pasted here>
 
-        <Cheerful message> :tada:
+<Cheerful message> :tada:
       \`\`\``,
     );
   },
