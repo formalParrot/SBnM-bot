@@ -25,12 +25,6 @@ module.exports = {
     .setDescription("Create a new event with all channels and structure")
     .addStringOption((o) =>
       o.setName("name").setDescription("Event name").setRequired(true),
-    )
-    .addStringOption((o) =>
-      o
-        .setName("description")
-        .setDescription("Event description")
-        .setRequired(false),
     ),
 
   async execute(interaction) {
@@ -44,9 +38,7 @@ module.exports = {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     const name = interaction.options.getString("name");
-    const description =
-      interaction.options.getString("description") ??
-      "Forgot to put description lol";
+    const description = interaction.options.getString("description") ?? "";
     const guild = interaction.guild;
     const judgeRoleId = process.env.JUDGE_ROLE_ID;
     const adminRoleId = process.env.ADMIN_ROLE_ID;
@@ -149,7 +141,6 @@ module.exports = {
     // Submission channel embed + buttons
     const subEmbed = new EmbedBuilder()
       .setTitle(name)
-      .setDescription(description)
       .setColor(0x5865f2)
       .addFields(
         { name: "Results", value: `<#${resultsChannel.id}>`, inline: true },
@@ -193,7 +184,7 @@ module.exports = {
     stmts.setJudgeHubMessage.run(hubMsg.id, eventId);
 
     await interaction.editReply(
-      `Event **${name}** created. Submission channel: <#${subChannel.id}>`,
+      `Event **${name}** created. Submission channel: <#${subChannel.id}>.\n Template for the Description `,
     );
   },
 };
