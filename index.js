@@ -41,4 +41,6 @@ for (const file of fs.readdirSync(eventsPath).filter(f => f.endsWith('.js'))) {
  }
 }
 
+client.on('error', (err) => console.error('[client error]', err.message));
+
 client.login(process.env.DISCORD_TOKEN);

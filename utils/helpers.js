@@ -164,24 +164,36 @@ async function setThreadVisibility(
   adminRoleId,
   visible,
 ) {
+  // Fetch all members once so role.members is fully populated
+  if (visible) {
+    try {
+      await guild.members.fetch();
+    } catch (err) {
+      console.error('[setThreadVisibility] members fetch failed:', err.message);
+    }
+  }
+
+  const judgeRole = judgeRoleId ? guild.roles.cache.get(judgeRoleId) : null;
+  const adminRole = adminRoleId ? guild.roles.cache.get(adminRoleId) : null;
+
   for (const sub of submissions) {
     try {
       const thread = await guild.channels.fetch(sub.thread_id);
       if (!thread) continue;
 
       if (visible) {
-        if (judgeRoleId) {
-          try {
-            const allMembers = await guild.members.fetch();
-            for (const [, m] of allMembers.filter((m) =>
-              m.roles.cache.has(judgeRoleId),
-            )) {
-              await thread.members.add(m.id).catch(() => {});
+        await thread.setArchived(false);
+        for (const role of [judgeRole, adminRole]) {
+          if (!role) continue;
+          for (const member of role.members.values()) {
+            try {
+              await thread.members.add(member.id);
+            } catch (err) {
+              console.error(`[setThreadVisibility] add ${member.id}:`, err.message);
             }
-          } catch (_) {}
+          }
         }
         await thread.setLocked(true);
-        await thread.setArchived(false);
       } else {
         await thread.permissionOverwrites.edit(guild.id, {
           ViewChannel: false,

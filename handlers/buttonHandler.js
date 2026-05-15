@@ -113,7 +113,10 @@ async function handleButtons(interaction) {
         { name: "Deadline", value: deadline },
       )
       .setTimestamp();
-    return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
+    return interaction.reply({
+      embeds: [embed],
+      flags: MessageFlags.Ephemeral,
+    });
   }
 
   // ---------------------------------------------------------------------------
@@ -431,7 +434,9 @@ async function handleButtons(interaction) {
     // overwrite that blocks guild.channels.fetch, only needs Manage Channels role perm
     if (event.judge_channel_id) {
       try {
-        await interaction.client.rest.delete(`/channels/${event.judge_channel_id}`);
+        await interaction.client.rest.delete(
+          `/channels/${event.judge_channel_id}`,
+        );
       } catch (err) {
         console.error("[delete] judging channel:", err.message);
       }
@@ -533,9 +538,7 @@ async function handleButtons(interaction) {
 
     const modal = new ModalBuilder()
       .setCustomId(`modal_score_${submissionId}`)
-      .setTitle(
-        `Score Entry #${submission.entry_num} - ${submission.title}`,
-      );
+      .setTitle(`Score Entry #${submission.entry_num} - ${submission.title}`);
 
     modal.addComponents(
       new ActionRowBuilder().addComponents(

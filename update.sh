@@ -16,7 +16,7 @@ check_and_update() {
   git fetch origin main 2>/dev/null || return 0
 
   LOCAL=$(git rev-parse HEAD)
-  REMOTE=$(git rev-pawrse origin/main)
+  REMOTE=$(git rev-parse origin/main)
 
   # Already up to date — nothing to do.
   if [ "$LOCAL" = "$REMOTE" ]; then

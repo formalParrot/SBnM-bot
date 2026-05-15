@@ -11,6 +11,14 @@ const {
 const { stmts } = require("../../db");
 const { buildJudgeHub, statusBadge } = require("../../utils/helpers");
 
+function isAdmin(member) {
+  const adminRoleId = process.env.ADMIN_ROLE_ID;
+  return (
+    member.permissions.has("Administrator") ||
+    (adminRoleId && member.roles.cache.has(adminRoleId))
+  );
+}
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("event-setup")
@@ -23,10 +31,16 @@ module.exports = {
         .setName("description")
         .setDescription("Event description")
         .setRequired(false),
-    )
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+    ),
 
   async execute(interaction) {
+    if (!isAdmin(interaction.member)) {
+      return interaction.reply({
+        content: "You do not have permission to use this command.",
+        ephemeral: true,
+      });
+    }
+
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     const name = interaction.options.getString("name");

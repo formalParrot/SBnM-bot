@@ -1,9 +1,10 @@
-const { ChannelType, PermissionFlagsBits, MessageFlags } = require("discord.js");
-const { stmts } = require("../db");
 const {
-  submissionEmbed,
-  refreshJudgeHub,
-} = require("../utils/helpers");
+  ChannelType,
+  PermissionFlagsBits,
+  MessageFlags,
+} = require("discord.js");
+const { stmts } = require("../db");
+const { submissionEmbed, refreshJudgeHub } = require("../utils/helpers");
 
 async function handleModals(interaction) {
   // -------------------------------------------------------------------------
@@ -42,6 +43,9 @@ async function handleModals(interaction) {
     const judgeRoleId = process.env.JUDGE_ROLE_ID;
     const adminRoleId = process.env.ADMIN_ROLE_ID;
 
+    // Fetch admin IDs before creating the thread so gateway events from
+    // previous thread member additions can't race and clear roles from cache
+
     // Create private thread inside the submission channel
     let thread;
     try {
@@ -66,15 +70,16 @@ async function handleModals(interaction) {
     await thread.members.add(interaction.user.id);
 
     // Add admins
-    if (adminRoleId) {
-      try {
-        const members = await guild.members.fetch();
-        for (const [, m] of members.filter((m) =>
-          m.roles.cache.has(adminRoleId),
-        )) {
-          await thread.members.add(m.id).catch(() => {});
+    const role = guild.roles.cache.get(adminRoleId);
+    if (role) {
+      await guild.members.fetch();
+      for (const member of role.members.values()) {
+        try {
+          await thread.members.add(member.id);
+        } catch (error) {
+          console.error(`Failed to add ${member.user.tag}:`, error);
         }
-      } catch (_) {}
+      }
     }
 
     // Save to DB
