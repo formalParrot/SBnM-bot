@@ -11,6 +11,7 @@ const {
 const { stmts } = require("../db");
 const {
   statusBadge,
+  buildJudgeHub,
   entryDetailEmbed,
   refreshJudgeHub,
   setThreadVisibility,
@@ -113,6 +114,43 @@ async function handleButtons(interaction) {
       )
       .setTimestamp();
     return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Judge hub pagination: jpage_prev_<page>_<eventId> / jpage_next_<page>_<eventId>
+  // ---------------------------------------------------------------------------
+  if (customId.startsWith("jpage_")) {
+    if (!isJudge(interaction.member)) {
+      return interaction.reply({
+        content: "You do not have permission to do that.",
+        flags: MessageFlags.Ephemeral,
+      });
+    }
+
+    await interaction.deferUpdate();
+
+    const parts = customId.split("_"); // ['jpage', 'prev'/'next', page, eventId]
+    const dir = parts[1];
+    const currentPage = parseInt(parts[2], 10);
+    const eventId = parts[3];
+    const event = stmts.getEvent.get(eventId);
+    if (!event) return;
+
+    const newPage = dir === "prev" ? currentPage - 1 : currentPage + 1;
+    const submissions = stmts.getSubmissionsByEvent.all(event.id);
+    const rows = submissions.map((sub) => {
+      const { avg, count } = stmts.getAvgScore.get(sub.id);
+      return { sub, avg: avg ?? 0, scoreCount: count };
+    });
+
+    const { embed, components } = buildJudgeHub(
+      event.name,
+      event.id,
+      rows,
+      event.status,
+      newPage,
+    );
+    return interaction.editReply({ embeds: [embed], components });
   }
 
   // ---------------------------------------------------------------------------
@@ -242,11 +280,6 @@ async function handleButtons(interaction) {
               .setColor(colors[i] ?? 0x5865f2)
               .addFields(
                 { name: "Creator", value: `<@${sub.user_id}>`, inline: true },
-                {
-                  name: "Codename",
-                  value: `\`${sub.codename}\``,
-                  inline: true,
-                },
                 {
                   name: "Category",
                   value: sub.category || "General",
@@ -501,7 +534,7 @@ async function handleButtons(interaction) {
     const modal = new ModalBuilder()
       .setCustomId(`modal_score_${submissionId}`)
       .setTitle(
-        `Score Entry #${submission.entry_num} - ${submission.codename}`,
+        `Score Entry #${submission.entry_num} - ${submission.title}`,
       );
 
     modal.addComponents(

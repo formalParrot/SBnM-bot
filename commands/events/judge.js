@@ -48,7 +48,7 @@ module.exports = {
         ? `yours: ${myScore.score}/10`
         : "not scored by you";
       const avgStr = count > 0 ? `avg: ${avg}/10` : "no scores yet";
-      return `[${myScore ? "x" : " "}] #${sub.entry_num} \`${sub.codename}\` - ${sub.title} | ${scored} | ${avgStr}`;
+      return `[${myScore ? "x" : " "}] #${sub.entry_num} ${sub.title} | ${scored} | ${avgStr}`;
     });
 
     const embed = new EmbedBuilder()

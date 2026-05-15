@@ -1,7 +1,6 @@
 const { ChannelType, PermissionFlagsBits, MessageFlags } = require("discord.js");
 const { stmts } = require("../db");
 const {
-  generateCodename,
   submissionEmbed,
   refreshJudgeHub,
 } = require("../utils/helpers");
@@ -36,7 +35,6 @@ async function handleModals(interaction) {
     const link = null;
     const category = "General";
 
-    const codename = generateCodename();
     const { count } = stmts.countSubmissions.get(eventId);
     const entryNum = count + 1;
 
@@ -51,7 +49,7 @@ async function handleModals(interaction) {
         event.submission_channel_id,
       );
       thread = await subChannel.threads.create({
-        name: `#${entryNum} - ${codename}`,
+        name: `#${entryNum} - ${title}`,
         type: ChannelType.PrivateThread,
         autoArchiveDuration: 10080, // 1 week
         invitable: false,
@@ -84,7 +82,7 @@ async function handleModals(interaction) {
       event_id: eventId,
       user_id: interaction.user.id,
       thread_id: thread.id,
-      codename,
+      codename: title,
       entry_num: entryNum,
       title,
       description,
@@ -92,14 +90,7 @@ async function handleModals(interaction) {
       category,
     });
 
-    // Post confirmation embed inside the thread (no username - just codename)
-    const embed = submissionEmbed(
-      event,
-      codename,
-      entryNum,
-      title,
-      description,
-    );
+    const embed = submissionEmbed(event, entryNum, title, description);
     if (link) embed.addFields({ name: "Link", value: link });
     embed.addFields(
       { name: "Category", value: category, inline: true },
@@ -115,7 +106,7 @@ async function handleModals(interaction) {
     await refreshJudgeHub(guild, event, stmts);
 
     return interaction.editReply(
-      `Submission received.\n\nEntry #${entryNum} - \`${codename}\`\nYour private thread: <#${thread.id}>\n\nUpload your files there.`,
+      `Submission received.\n\nEntry #${entryNum} — ${title}\nYour private thread: <#${thread.id}>\n\nUpload your files there.`,
     );
   }
 
@@ -162,7 +153,7 @@ async function handleModals(interaction) {
     await refreshJudgeHub(interaction.guild, event, stmts);
 
     return interaction.editReply(
-      `Score saved: **${score}/10** for Entry #${submission.entry_num} (\`${submission.codename}\`).\nCurrent average: **${avg}/10** from ${count} judge${count !== 1 ? "s" : ""}.`,
+      `Score saved: **${score}/10** for Entry #${submission.entry_num} — ${submission.title}.\nCurrent average: **${avg}/10** from ${count} judge${count !== 1 ? "s" : ""}.`,
     );
   }
 }

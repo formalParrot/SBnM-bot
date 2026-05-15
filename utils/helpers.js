@@ -5,59 +5,6 @@ const {
   ButtonStyle,
 } = require("discord.js");
 
-// --- Codename Generator --------------------------------------------------
-const ADJECTIVES = [
-  "Silver",
-  "Golden",
-  "Crimson",
-  "Azure",
-  "Jade",
-  "Obsidian",
-  "Amber",
-  "Ivory",
-  "Scarlet",
-  "Cobalt",
-  "Emerald",
-  "Onyx",
-  "Violet",
-  "Sapphire",
-  "Bronze",
-  "Copper",
-  "Maroon",
-  "Teal",
-  "Indigo",
-  "Opal",
-];
-const NOUNS = [
-  "Falcon",
-  "Phoenix",
-  "Dragon",
-  "Raven",
-  "Titan",
-  "Specter",
-  "Comet",
-  "Vortex",
-  "Cipher",
-  "Phantom",
-  "Nexus",
-  "Prism",
-  "Tempest",
-  "Horizon",
-  "Zenith",
-  "Apex",
-  "Eclipse",
-  "Quasar",
-  "Nebula",
-  "Pulse",
-];
-
-function generateCodename() {
-  const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
-  const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)];
-  const num = Math.floor(10 + Math.random() * 90);
-  return `${adj}-${noun}-${num}`;
-}
-
 // --- Status label --------------------------------------------------------
 function statusBadge(status) {
   const map = {
@@ -71,8 +18,7 @@ function statusBadge(status) {
   return map[status] ?? status;
 }
 
-// --- Phase transition buttons (admin only row) ---------------------------
-// Shows only the valid next steps from the current phase
+// --- Phase transition map ------------------------------------------------
 const NEXT_PHASES = {
   submissions_open: [
     { label: "Start Judging", value: "judging", style: ButtonStyle.Primary },
@@ -86,24 +32,18 @@ const NEXT_PHASES = {
   archived: [],
 };
 
-function phaseButtonRow(eventId, currentStatus) {
-  const options = NEXT_PHASES[currentStatus] ?? [];
-  if (!options.length) return null;
-  const row = new ActionRowBuilder();
-  for (const opt of options) {
-    row.addComponents(
-      new ButtonBuilder()
-        .setCustomId(`phase_${opt.value}_${eventId}`)
-        .setLabel(opt.label)
-        .setStyle(opt.style),
-    );
-  }
-  return row;
-}
-
 // --- Judge hub embed + per-entry View buttons + phase controls -----------
+const ENTRIES_PER_PAGE = 20;
+
 // rows: [{ sub, avg, scoreCount }]
-function buildJudgeHub(eventName, eventId, rows, currentStatus) {
+function buildJudgeHub(eventName, eventId, rows, currentStatus, page = 0) {
+  const totalPages = Math.max(1, Math.ceil(rows.length / ENTRIES_PER_PAGE));
+  const safePage = Math.min(Math.max(0, page), totalPages - 1);
+  const pageRows = rows.slice(
+    safePage * ENTRIES_PER_PAGE,
+    (safePage + 1) * ENTRIES_PER_PAGE,
+  );
+
   const embed = new EmbedBuilder()
     .setTitle(`Judging — ${eventName}`)
     .setColor(0xe67e22)
@@ -113,7 +53,7 @@ function buildJudgeHub(eventName, eventId, rows, currentStatus) {
       inline: true,
     })
     .setFooter({
-      text: `Event ID: ${eventId} | Click an entry to view and score it`,
+      text: `Event ID: ${eventId} | Page ${safePage + 1}/${totalPages} | Click an entry to view and score it`,
     })
     .setTimestamp();
 
@@ -122,63 +62,78 @@ function buildJudgeHub(eventName, eventId, rows, currentStatus) {
       "No submissions yet. Entries will appear here as they come in.",
     );
   } else {
-    const lines = rows.map(({ sub, avg, scoreCount }) => {
+    const lines = pageRows.map(({ sub, avg, scoreCount }) => {
       const scoreStr =
         scoreCount > 0
           ? `${avg}/10 (${scoreCount} score${scoreCount !== 1 ? "s" : ""})`
           : "unscored";
-      return `**#${sub.entry_num}** \`${sub.codename}\` - ${sub.title} | ${scoreStr}`;
+      return `**#${sub.entry_num}** ${sub.title} | ${scoreStr}`;
     });
     embed.setDescription(lines.join("\n"));
-    embed.addFields({
-      name: "Total Entries",
-      value: `${rows.length}`,
-      inline: true,
-    });
+    embed.addFields(
+      { name: "Total Entries", value: `${rows.length}`, inline: true },
+      {
+        name: "Page",
+        value: `${safePage + 1} / ${totalPages}`,
+        inline: true,
+      },
+    );
   }
 
   const components = [];
 
-  // Entry view buttons (max 25 across 5 rows)
-  const visible = rows.slice(0, 25);
-  for (let r = 0; r < Math.ceil(visible.length / 5); r++) {
+  // Entry buttons: 4 rows × 5 = 20 per page
+  for (let r = 0; r < Math.ceil(pageRows.length / 5); r++) {
     const actionRow = new ActionRowBuilder();
-    for (const { sub } of visible.slice(r * 5, r * 5 + 5)) {
+    for (const { sub } of pageRows.slice(r * 5, r * 5 + 5)) {
+      const raw = `#${sub.entry_num} - ${sub.title}`;
       actionRow.addComponents(
         new ButtonBuilder()
           .setCustomId(`jview_${sub.id}`)
-          .setLabel(`#${sub.entry_num} - ${sub.codename}`)
+          .setLabel(raw.length > 80 ? raw.slice(0, 77) + "..." : raw)
           .setStyle(ButtonStyle.Primary),
       );
     }
     components.push(actionRow);
   }
 
-  // Controls row: phase transition + delete button (always shown if room available)
-  if (components.length < 5) {
-    const controlRow = new ActionRowBuilder();
-    for (const opt of NEXT_PHASES[currentStatus] ?? []) {
-      controlRow.addComponents(
-        new ButtonBuilder()
-          .setCustomId(`phase_${opt.value}_${eventId}`)
-          .setLabel(opt.label)
-          .setStyle(opt.style),
-      );
-    }
+  // Control row: ← Prev | Next → | [phase button] | Delete Event
+  const controlRow = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId(`jpage_prev_${safePage}_${eventId}`)
+      .setLabel("← Prev")
+      .setStyle(ButtonStyle.Secondary)
+      .setDisabled(safePage === 0),
+    new ButtonBuilder()
+      .setCustomId(`jpage_next_${safePage}_${eventId}`)
+      .setLabel("Next →")
+      .setStyle(ButtonStyle.Secondary)
+      .setDisabled(safePage >= totalPages - 1),
+  );
+
+  for (const opt of NEXT_PHASES[currentStatus] ?? []) {
     controlRow.addComponents(
       new ButtonBuilder()
-        .setCustomId(`event_delete_confirm_${eventId}`)
-        .setLabel("Delete Event")
-        .setStyle(ButtonStyle.Danger),
+        .setCustomId(`phase_${opt.value}_${eventId}`)
+        .setLabel(opt.label)
+        .setStyle(opt.style),
     );
-    components.push(controlRow);
   }
+
+  controlRow.addComponents(
+    new ButtonBuilder()
+      .setCustomId(`event_delete_confirm_${eventId}`)
+      .setLabel("Delete Event")
+      .setStyle(ButtonStyle.Danger),
+  );
+
+  components.push(controlRow);
 
   return { embed, components };
 }
 
 // --- Rebuild and edit the pinned judge hub message -----------------------
-async function refreshJudgeHub(guild, event, stmts) {
+async function refreshJudgeHub(guild, event, stmts, page = 0) {
   if (!event.judge_channel_id || !event.judge_hub_message_id) return;
   try {
     const channel = await guild.channels.fetch(event.judge_channel_id);
@@ -193,6 +148,7 @@ async function refreshJudgeHub(guild, event, stmts) {
       event.id,
       rows,
       event.status,
+      page,
     );
     await message.edit({ embeds: [embed], components });
   } catch (err) {
@@ -201,7 +157,6 @@ async function refreshJudgeHub(guild, event, stmts) {
 }
 
 // --- Toggle judge thread visibility --------------------------------------
-// called when entering/leaving judging phase
 async function setThreadVisibility(
   guild,
   submissions,
@@ -215,9 +170,6 @@ async function setThreadVisibility(
       if (!thread) continue;
 
       if (visible) {
-        // Judging: add judges as members so they can view the private thread.
-        // setLocked(true) already prevents non-moderators from sending — no
-        // need for extra permission overwrites that can break visibility.
         if (judgeRoleId) {
           try {
             const allMembers = await guild.members.fetch();
@@ -231,7 +183,6 @@ async function setThreadVisibility(
         await thread.setLocked(true);
         await thread.setArchived(false);
       } else {
-        // Back to submissions open: submitter can send, judges hidden
         await thread.permissionOverwrites.edit(guild.id, {
           ViewChannel: false,
         });
@@ -251,14 +202,13 @@ async function setThreadVisibility(
 }
 
 // --- Submission confirm embed (inside submitter thread) ------------------
-function submissionEmbed(event, codename, entryNum, title, desc) {
+function submissionEmbed(event, entryNum, title, desc) {
   return new EmbedBuilder()
     .setTitle("Submission Confirmed")
     .setColor(0x2ecc71)
     .addFields(
       { name: "Event", value: event.name, inline: true },
       { name: "Entry", value: `#${entryNum}`, inline: true },
-      { name: "Codename", value: `\`${codename}\``, inline: true },
       { name: "Title", value: title },
       { name: "Description", value: desc },
     )
@@ -271,7 +221,7 @@ function submissionEmbed(event, codename, entryNum, title, desc) {
 // --- Entry detail embed (shown to judge on View button) -----------------
 function entryDetailEmbed(sub, avg, scoreCount, myScore) {
   const embed = new EmbedBuilder()
-    .setTitle(`Entry #${sub.entry_num} - ${sub.codename}`)
+    .setTitle(`Entry #${sub.entry_num} - ${sub.title}`)
     .setColor(0x5865f2)
     .addFields(
       { name: "Title", value: sub.title || "Untitled", inline: true },
@@ -314,7 +264,6 @@ function archiveEntryEmbed(rank, sub, avg, feedbackLines) {
     .setColor(colors[rank - 1] ?? 0x5865f2)
     .addFields(
       { name: "Creator", value: `<@${sub.user_id}>`, inline: true },
-      { name: "Codename", value: `\`${sub.codename}\``, inline: true },
       { name: "Category", value: sub.category || "General", inline: true },
       { name: "Final Score", value: `${avg}/10`, inline: true },
       { name: "Description", value: sub.description || "No description." },
@@ -333,7 +282,6 @@ function archiveEntryEmbed(rank, sub, avg, feedbackLines) {
 }
 
 module.exports = {
-  generateCodename,
   statusBadge,
   buildJudgeHub,
   refreshJudgeHub,
