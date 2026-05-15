@@ -54,7 +54,7 @@ JUDGE_ROLE_ID=role_id_for_judges
 ADMIN_ROLE_ID=role_id_for_admins
 ```
 
-** Never commit `.env` to git.** Add it to `.gitignore`.
+**Never commit `.env` to git.** Add it to `.gitignore`.
 
 ### 3. Bot permissions required
 
