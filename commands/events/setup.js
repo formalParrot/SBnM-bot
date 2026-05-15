@@ -147,12 +147,7 @@ module.exports = {
         {
           name: "How to Submit",
           value:
-            "1. Click Submit Entry below\n2. Fill submission details in\n3. Upload files + Additional info in **private thread**",
-        },
-        {
-          name: "Rules",
-          value:
-            "- Original work only\n- Judges decisions are final, don't try to re-convince them",
+            "1. Click Submit below\n2. Fill submission details in\n3. Upload files + Additional info in **private thread**",
         },
       )
       .setFooter({ text: `Event ID: ${eventId}` })
@@ -184,7 +179,26 @@ module.exports = {
     stmts.setJudgeHubMessage.run(hubMsg.id, eventId);
 
     await interaction.editReply(
-      `Event **${name}** created. Submission channel: <#${subChannel.id}>.\n Template for the Description `,
+      `Event **${name}** created. Submission channel: <#${subChannel.id}>.\nTemplate for the task description:\`\`\`
+        Who built the best Starter Base?
+
+        <Task Description>
+
+        :date: Competition Ends: 24th of May (in 9 days)
+
+
+        :envelope: Submit your builds via the button above ^^
+
+        :green_book: Rules:
+
+        :❌: No stolen builds
+        :❌: No inappropriate builds
+
+        :thinking: Any questions?
+        <Question channel has to be set up, and link pasted here>
+
+        <Cheerful message> 🎉
+      \`\`\``,
     );
   },
 };
