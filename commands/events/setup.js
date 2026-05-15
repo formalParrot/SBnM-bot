@@ -184,17 +184,15 @@ module.exports = {
 
 <Task Description>
 
-:date: Competition Ends: 24th of May (in 9 days)
+:date: **Competition Ends**: < I suggest pinging @time, and it will make a timestamp that changes in timezones. >
 
+:envelope: **Submit your builds** via the button above ^^
 
-:envelope: Submit your builds via the button above ^^
+:green_book: **Rules**:
+  :x: No stolen builds
+  :x: No inappropriate builds
 
-:green_book: Rules:
-
-:x: No stolen builds
-:x: No inappropriate builds
-
-:thinking: Any questions?
+:thinking: **Any questions?**
 <Question channel has to be set up, and link pasted here>
 
 <Cheerful message> :tada:
