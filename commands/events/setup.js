@@ -180,7 +180,7 @@ module.exports = {
 
     await interaction.editReply(
       `Event **${name}** created. Submission channel: <#${subChannel.id}>.\nTemplate for the task description:\`\`\`
-        Who built the best Starter Base?
+        ## <Task Name>
 
         <Task Description>
 
@@ -191,13 +191,13 @@ module.exports = {
 
         :green_book: Rules:
 
-        :❌: No stolen builds
-        :❌: No inappropriate builds
+        :x: No stolen builds
+        :x: No inappropriate builds
 
         :thinking: Any questions?
         <Question channel has to be set up, and link pasted here>
 
-        <Cheerful message> 🎉
+        <Cheerful message> :tada:
       \`\`\``,
     );
   },
