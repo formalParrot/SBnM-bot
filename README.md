@@ -9,21 +9,21 @@ A production-quality bot for managing competitive creative events (map building,
 ```
 bot/
  commands/
- events/
- setup.js # /event-setup
- status.js # /event-status
- phase.js # /event-phase
- judge.js # /event-judge
- reveal.js # /event-reveal
+    events/
+      setup.js # /event-setup
+      status.js # /event-status
+      phase.js # /event-phase
+      judge.js # /event-judge
+      reveal.js # /event-reveal
  handlers/
- commandHandler.js
- buttonHandler.js
- modalHandler.js
+  commandHandler.js
+  buttonHandler.js
+  modalHandler.js
  events/
- ready.js
- interactionCreate.js
+  ready.js
+  interactionCreate.js
  utils/
- helpers.js
+  helpers.js
  db.js
  index.js
  deploy-commands.js
