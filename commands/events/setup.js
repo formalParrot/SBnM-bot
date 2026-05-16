@@ -49,7 +49,7 @@ module.exports = {
       type: ChannelType.GuildCategory,
     });
 
-    // Submission channel - everyone can read, no one can send (except the bot)
+    // Submission channel - everyone can read, no one can send (except the bot and admins)
     const subChannel = await guild.channels.create({
       name: "submit",
       type: ChannelType.GuildText,
@@ -67,6 +67,17 @@ module.exports = {
             PermissionFlagsBits.SendMessages,
           ],
         },
+        ...(adminRoleId
+          ? [
+              {
+                id: adminRoleId,
+                allow: [
+                  PermissionFlagsBits.ViewChannel,
+                  PermissionFlagsBits.SendMessages,
+                ],
+              },
+            ]
+          : []),
       ],
     });
 
