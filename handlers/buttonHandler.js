@@ -451,6 +451,55 @@ async function handleButtons(interaction) {
   }
 
   // ---------------------------------------------------------------------------
+  // Judge hub: My Progress -> ephemeral per-judge checklist
+  // ---------------------------------------------------------------------------
+  if (customId.startsWith("jmyprogress_")) {
+    if (!isJudge(interaction.member)) {
+      return interaction.reply({
+        content: "You do not have permission to do that.",
+        flags: MessageFlags.Ephemeral,
+      });
+    }
+
+    const eventId = customId.slice("jmyprogress_".length);
+    const event = stmts.getEvent.get(eventId);
+    if (!event)
+      return interaction.reply({
+        content: "Event not found.",
+        flags: MessageFlags.Ephemeral,
+      });
+
+    const submissions = stmts.getSubmissionsByEvent.all(event.id);
+    if (!submissions.length)
+      return interaction.reply({
+        content: "No submissions found for this event.",
+        flags: MessageFlags.Ephemeral,
+      });
+
+    let myScored = 0;
+    const lines = submissions.map((sub) => {
+      const myScore = stmts.getScore.get(sub.id, interaction.user.id);
+      const { avg, count } = stmts.getAvgScore.get(sub.id);
+      if (myScore) myScored++;
+      const check = myScore ? "✅" : "⬜";
+      const yours = myScore ? `your score: **${myScore.score}/10**` : "not scored";
+      const avgStr = count > 0 ? `avg: ${avg}/10` : "no scores yet";
+      return `${check} **#${sub.entry_num}** ${sub.title}  ·  ${yours}  ·  ${avgStr}`;
+    });
+
+    const embed = new EmbedBuilder()
+      .setTitle(`My Progress — ${event.name}`)
+      .setColor(0x5865f2)
+      .setDescription(lines.join("\n"))
+      .setFooter({
+        text: `${myScored} of ${submissions.length} entries scored by you`,
+      })
+      .setTimestamp();
+
+    return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
+  }
+
+  // ---------------------------------------------------------------------------
   // Judge hub: View entry -> entry detail embed + Score button
   // ---------------------------------------------------------------------------
   if (customId.startsWith("jview_")) {

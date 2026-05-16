@@ -196,7 +196,8 @@ module.exports = {
 <Question channel has to be set up, and link pasted here>
 
 <Cheerful message> :tada:
-      \`\`\``,
+      \`\`\`
+      `,
     );
   },
 };

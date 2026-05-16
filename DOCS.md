@@ -18,9 +18,7 @@ index.js  ←  boots the bot, loads everything
     │
     ├── commands/events/
     │       ├── setup.js    /event-setup
-    │       ├── judge.js    /event-judge
     │       ├── status.js   /event-status
-    │       ├── reveal.js   /event-reveal
     │       └── delete.js   /event-delete
     │
     ├── utils/helpers.js    shared functions (embeds, thread perms, etc.)
@@ -115,6 +113,8 @@ The busiest file. Handles every button click in the bot. Buttons are identified 
 
 **`event_delete_execute_*`** — Actually deletes everything: submission threads, the three event channels, the category, and all database rows. Admin only. Irreversible.
 
+**`jmyprogress_*`** — Opens an ephemeral checklist for the clicking judge: every entry with a ✅/⬜ indicator, their personal score, and the current average. Only shown during the judging phase.
+
 **`jview_*`** — Shows a judge the full details of an entry (title, description, link, current average score, their own score if they've already scored it). Only works during judging phase. Opens an ephemeral card with a "Score this Entry" button and a link to the submission thread.
 
 **`jscore_*`** — Opens the score modal for a specific entry. Only works during judging phase. Judges can't score their own submissions.
@@ -134,18 +134,8 @@ Admin-only. Creates a full competition from scratch:
 
 ---
 
-### `commands/events/judge.js` — `/event-judge`
-For judges and admins. Shows a personal judging progress report: which entries you've scored, which you haven't, and the current average for each. Useful for tracking your own progress without going through the judging panel.
-
----
-
 ### `commands/events/status.js` — `/event-status`
 Admin-only. Shows a stats card for an event: current phase, total submissions, how many have been scored, how many are still pending. Defaults to the most recent active event if no ID is given.
-
----
-
-### `commands/events/reveal.js` — `/event-reveal`
-Admin-only. A manual fallback to trigger the "revealed" phase via slash command instead of the panel button. Makes all submission threads public and read-only. The normal flow is to use the judging panel buttons instead.
 
 ---
 
@@ -161,7 +151,7 @@ Shared utility functions used across the bot.
 
 **`statusBadge(status)`** — Converts internal status strings like `submissions_open` into readable labels like `Submissions Open`.
 
-**`buildJudgeHub(name, eventId, rows, status)`** — Builds the full judging panel embed and button rows. Shows all entries with their current average scores, plus the phase transition button and the Delete Event button on the last row.
+**`buildJudgeHub(name, eventId, rows, status)`** — Builds the full judging panel embed and button rows. The embed sidebar color shifts per phase (amber → blue → green → gray). Each entry line shows a ⬜/🟡/🟢 dot based on how many judges have scored it, plus the current average. The control row includes a **My Progress** button (judging phase only) that triggers `jmyprogress_*`, phase transition buttons, and Delete Event.
 
 **`refreshJudgeHub(guild, event, stmts)`** — Fetches the pinned judging panel message and edits it in place so it always shows up-to-date entry counts and scores. Called after every submission and every score.
 

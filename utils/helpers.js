@@ -35,6 +35,13 @@ const NEXT_PHASES = {
 // --- Judge hub embed + per-entry View buttons + phase controls -----------
 const ENTRIES_PER_PAGE = 20;
 
+const PHASE_COLOR = {
+  submissions_open: 0xf0a500,
+  judging: 0x5865f2,
+  revealed: 0x57f287,
+  archived: 0x4f545c,
+};
+
 // rows: [{ sub, avg, scoreCount }]
 function buildJudgeHub(eventName, eventId, rows, currentStatus, page = 0) {
   const totalPages = Math.max(1, Math.ceil(rows.length / ENTRIES_PER_PAGE));
@@ -44,16 +51,13 @@ function buildJudgeHub(eventName, eventId, rows, currentStatus, page = 0) {
     (safePage + 1) * ENTRIES_PER_PAGE,
   );
 
+  const scoredCount = rows.filter((r) => r.scoreCount > 0).length;
+
   const embed = new EmbedBuilder()
-    .setTitle(`Judging — ${eventName}`)
-    .setColor(0xe67e22)
-    .addFields({
-      name: "Phase",
-      value: statusBadge(currentStatus),
-      inline: true,
-    })
+    .setTitle(eventName)
+    .setColor(PHASE_COLOR[currentStatus] ?? 0x5865f2)
     .setFooter({
-      text: `Event ID: ${eventId} | Page ${safePage + 1}/${totalPages} | Click an entry to view and score it`,
+      text: `Event ID: ${eventId}${totalPages > 1 ? ` · Page ${safePage + 1}/${totalPages}` : ""} · Click an entry to view and score`,
     })
     .setTimestamp();
 
@@ -63,21 +67,21 @@ function buildJudgeHub(eventName, eventId, rows, currentStatus, page = 0) {
     );
   } else {
     const lines = pageRows.map(({ sub, avg, scoreCount }) => {
+      const dot =
+        scoreCount === 0 ? "⬜" : scoreCount === 1 ? "🟡" : "🟢";
       const scoreStr =
         scoreCount > 0
-          ? `${avg}/10 (${scoreCount} score${scoreCount !== 1 ? "s" : ""})`
+          ? `${avg}/10 · ${scoreCount} judge${scoreCount !== 1 ? "s" : ""}`
           : "unscored";
-      return `**#${sub.entry_num}** ${sub.title} | ${scoreStr}`;
+      return `${dot} **#${sub.entry_num}** ${sub.title}  ·  ${scoreStr}`;
     });
-    embed.setDescription(lines.join("\n"));
-    embed.addFields(
-      { name: "Total Entries", value: `${rows.length}`, inline: true },
-      {
-        name: "Page",
-        value: `${safePage + 1} / ${totalPages}`,
-        inline: true,
-      },
-    );
+    embed
+      .setDescription(lines.join("\n"))
+      .addFields(
+        { name: "​", value: currentStatus.replace("_", " "), inline: true },
+        { name: "Entries", value: `${rows.length}`, inline: true },
+        { name: "Scored", value: `${scoredCount} / ${rows.length}`, inline: true },
+      );
   }
 
   const components = [];
@@ -97,7 +101,7 @@ function buildJudgeHub(eventName, eventId, rows, currentStatus, page = 0) {
     components.push(actionRow);
   }
 
-  // Control row: ← Prev | Next → | [phase button] | Delete Event
+  // Control row: ← Prev | Next → | [My Progress] | [phase button] | Delete Event
   const controlRow = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId(`jpage_prev_${safePage}_${eventId}`)
@@ -110,6 +114,15 @@ function buildJudgeHub(eventName, eventId, rows, currentStatus, page = 0) {
       .setStyle(ButtonStyle.Secondary)
       .setDisabled(safePage >= totalPages - 1),
   );
+
+  if (currentStatus === "judging") {
+    controlRow.addComponents(
+      new ButtonBuilder()
+        .setCustomId(`jmyprogress_${eventId}`)
+        .setLabel("My Progress")
+        .setStyle(ButtonStyle.Secondary),
+    );
+  }
 
   for (const opt of NEXT_PHASES[currentStatus] ?? []) {
     controlRow.addComponents(

@@ -12,9 +12,7 @@ bot/
     events/
       setup.js # /event-setup
       status.js # /event-status
-      phase.js # /event-phase
-      judge.js # /event-judge
-      reveal.js # /event-reveal
+      delete.js # /event-delete
  handlers/
   commandHandler.js
   buttonHandler.js
@@ -85,15 +83,15 @@ npm start
  v
  Users click "Submit Entry" -> Modal -> Private thread created
  v
-/event-phase event-id:1 phase:judging (or through button)
+ Admin clicks "Start Judging" button in #judging
  v
- Threads lock, judges use /event-judge score ...
+ Threads lock, judges score via the judging panel
  v
-/event-reveal event-id:1
+ Admin clicks "Reveal Results" button
  v
- Threads go public, leaderboard posted
+ Threads go public
  v
-/event-phase event-id:1 phase:archived
+ Admin clicks "Archive Event" button -> results posted to #results
 ```
 
 ---
@@ -104,11 +102,7 @@ npm start
 |---|---|---|
 | `/event-setup` | Create a new event + all channels | Admin |
 | `/event-status` | View event stats and phase | Admin |
-| `/event-phase` | Advance event to next phase | Admin |
-| `/event-judge list` | List submissions to score | Judge/Admin |
-| `/event-judge score` | Score a submission (1-10 per category) | Judge/Admin |
-| `/event-judge progress` | Check your judging progress | Judge/Admin |
-| `/event-reveal` | Reveal results and post leaderboard | Admin |
+| `/event-delete` | Delete an event and all its data | Admin |
 
 ---
 

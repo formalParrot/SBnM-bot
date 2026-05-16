@@ -34,7 +34,6 @@ To move to the next phase, just hit the button at the bottom of the judging pane
 | `/event-setup` | Creates a new event with all channels |
 | `/event-status` | Shows a quick stats card (entries, scored, pending) |
 | `/event-delete` | Deletes an event and everything in it — asks for confirmation first |
-| `/event-reveal` | Manual fallback to trigger the revealed phase if the button isn't working |
 
 ---
 
@@ -48,7 +47,7 @@ When judging starts you'll get a ping in **#judging**. Head there and you'll see
 
 You can update your score any time before the event moves to the next phase. You can't score your own submission.
 
-Use `/event-judge` to check your personal progress — it'll show which entries you've scored and which you still need to get to.
+Hit **My Progress** at the bottom of the judging panel to see a personal checklist — which entries you've scored, your score for each, and the current average.
 
 ---
 
