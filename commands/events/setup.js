@@ -190,7 +190,7 @@ module.exports = {
     stmts.setJudgeHubMessage.run(hubMsg.id, eventId);
 
     await interaction.editReply(
-      `Event **${name}** created. Submission channel: <#${subChannel.id}>.\nTemplate for the task description:\`\`\`
+      `Event **${name}** created. Submission channel: <#${subChannel.id}>.\nTemplate for submissions channel:\`\`\`
 ## <Task Name>
 
 <Task Description>
